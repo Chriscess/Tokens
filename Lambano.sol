@@ -1,53 +1,74 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.0;
 
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
-contract Lambano {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    address public owner;
+contract Chrisces is IERC20 {
 
-    string private name = "Christine";
-    string private symbol = "cht";
-    uint private decimal = 6;
-    
-    uint private totalSupply_;
+    string public name = "Chrisces";
+    string public symbol = "CHS";
+    uint8 public decimals = 3;
 
-    mapping (address => uint) private balances;
+    uint256 private _totalSupply;
 
-    constructor(){
-        owner = msg.sender;
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
+
+    constructor() {
+        _totalSupply = 100 * (10 ** uint256(decimals));
+        _balances[msg.sender] = _totalSupply;
     }
 
-    function totalSupply() public view returns (uint){
-        return totalSupply_;
+    function totalSupply() public view override returns (uint256) {
+        return _totalSupply;
     }
 
-    function balanceOf(address addr) public view returns (uint){
-        return balances[addr];
+    function balanceOf(address account) public view override returns (uint256) {
+        return _balances[account];
     }
 
-    function transfer(address to, uint amount) public returns (bool){
-        if (balances[msg.sender] < (amount * (10 ** decimal))) revert("Insufficient amount");
-        balances[msg.sender] = balances[msg.sender] - (amount * (10 ** decimal));
-        balances[to] = balances[to] + (amount * (10 ** decimal));
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        require(recipient != address(0), "transfer to the zero address");
+        require(_balances[msg.sender] >= amount, "transfer amount exceeds balance");
+        
+        _balances[msg.sender] -= amount;
+        _balances[recipient] += amount;
+        
+        emit Transfer(msg.sender, recipient, amount);
         return true;
     }
 
-    function mint(uint amount) public {
-        require(msg.sender == owner, "You are not the Owner");
-        totalSupply_ = amount * (10 ** decimal);
-        balances[owner] += (balances[owner] + (amount * (10 ** decimal)));
-}
+    function allowance(address owner, address spender) public view override returns (uint256) {
+        return _allowances[owner][spender];
+    }
 
-    function burn(uint amount) public  {
-        if (balances[msg.sender] < (amount * (10 ** decimal))) revert("Not enough balance");
-        balances[msg.sender] = balances[msg.sender] - (amount * (10 ** decimal));
-        totalSupply_ = totalSupply_ - (amount * (10 ** decimal));
+    function approve(address spender, uint256 amount) public override returns (bool) {
+        _allowances[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+        require(sender != address(0), "transfer from the zero address");
+        require(recipient != address(0), "transfer to the zero address");
+        require(_balances[sender] >= amount, "transfer amount exceeds balance");
+        require(_allowances[sender][msg.sender] >= amount, "transfer amount exceeds allowance");
+
+        _balances[sender] -= amount;
+        _balances[recipient] += amount;
+        _allowances[sender][msg.sender] -= amount;
+
+        emit Transfer(sender, recipient, amount);
+        return true;
     }
 }
-
-
-
-
-
-
