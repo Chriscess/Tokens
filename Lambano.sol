@@ -20,12 +20,14 @@ contract Chrisces is IERC20 {
     uint8 public decimals = 3;
 
     uint256 private _totalSupply;
+    address private owner;
 
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
 
     constructor() {
-        _totalSupply = 100 * (10 ** uint256(decimals));
+        _totalSupply = 100 * (10 ** decimals);
+        owner = msg.sender;
         _balances[msg.sender] = _totalSupply;
     }
 
@@ -35,6 +37,18 @@ contract Chrisces is IERC20 {
 
     function balanceOf(address account) public view override returns (uint256) {
         return _balances[account];
+    }
+
+    function mint(uint _amount) external {
+        require(msg.sender == owner, "not owner");
+        _balances[msg.sender] += _amount;
+        _totalSupply += _amount;
+    }
+
+    function burn(uint _amount) external {
+        require(_balances[msg.sender] >= _amount, "Not enough balance");
+        _balances[msg.sender] -= _amount;
+        _totalSupply -= _amount;
     }
 
     function transfer(address recipient, uint256 amount) public override returns (bool) {
@@ -48,8 +62,8 @@ contract Chrisces is IERC20 {
         return true;
     }
 
-    function allowance(address owner, address spender) public view override returns (uint256) {
-        return _allowances[owner][spender];
+    function allowance(address _owner, address spender) public view override returns (uint256) {
+        return _allowances[_owner][spender];
     }
 
     function approve(address spender, uint256 amount) public override returns (bool) {
